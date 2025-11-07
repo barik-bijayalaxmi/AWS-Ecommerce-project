@@ -1,3 +1,4 @@
+require('dotenv').config(); 
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
@@ -15,11 +16,12 @@ const shopReviewRouter = require("./routes/shop/review-routes");
 
 const commonFeatureRouter = require("./routes/common/feature-routes");
 
-//create a database connection -> u can also
-//create a separate file for this and then import/use that file here
+// ✅ Add this line just before connecting to check your .env value
+console.log("MongoDB URL:", process.env.MONGODB_URL);
 
+// ✅ Correct MongoDB connection
 mongoose
-  .connect("db_url")
+  .connect(process.env.MONGODB_URL)
   .then(() => console.log("MongoDB connected"))
   .catch((error) => console.log(error));
 

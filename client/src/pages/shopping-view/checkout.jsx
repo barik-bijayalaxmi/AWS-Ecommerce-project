@@ -5,19 +5,17 @@ import UserCartItemsContent from "@/components/shopping-view/cart-items-content"
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { createNewOrder } from "@/store/shop/order-slice";
-import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 function ShoppingCheckout() {
   const { cartItems } = useSelector((state) => state.shopCart);
   const { user } = useSelector((state) => state.auth);
-  const { approvalURL } = useSelector((state) => state.shopOrder);
   const [currentSelectedAddress, setCurrentSelectedAddress] = useState(null);
-  const [isPaymentStart, setIsPaymemntStart] = useState(false);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const dispatch = useDispatch();
   const { toast } = useToast();
-
-  console.log(currentSelectedAddress, "cartItems");
+  const navigate = useNavigate();
 
   const totalCartAmount =
     cartItems && cartItems.items && cartItems.items.length > 0
@@ -32,36 +30,33 @@ function ShoppingCheckout() {
         )
       : 0;
 
-  function handleInitiatePaypalPayment() {
-    if (cartItems.length === 0) {
+  async function handleCashOnDeliveryOrder() {
+    if (!cartItems.items.length) {
       toast({
-        title: "Your cart is empty. Please add items to proceed",
+        title: "Your cart is empty. Please add items to proceed.",
         variant: "destructive",
       });
-
       return;
     }
-    if (currentSelectedAddress === null) {
+
+    if (!currentSelectedAddress) {
       toast({
-        title: "Please select one address to proceed.",
+        title: "Please select an address to proceed.",
         variant: "destructive",
       });
-
       return;
     }
 
     const orderData = {
       userId: user?.id,
       cartId: cartItems?._id,
-      cartItems: cartItems.items.map((singleCartItem) => ({
-        productId: singleCartItem?.productId,
-        title: singleCartItem?.title,
-        image: singleCartItem?.image,
+      cartItems: cartItems.items.map((item) => ({
+        productId: item?.productId,
+        title: item?.title,
+        image: item?.image,
         price:
-          singleCartItem?.salePrice > 0
-            ? singleCartItem?.salePrice
-            : singleCartItem?.price,
-        quantity: singleCartItem?.quantity,
+          item?.salePrice > 0 ? item?.salePrice : item?.price,
+        quantity: item?.quantity,
       })),
       addressInfo: {
         addressId: currentSelectedAddress?._id,
@@ -72,7 +67,7 @@ function ShoppingCheckout() {
         notes: currentSelectedAddress?.notes,
       },
       orderStatus: "pending",
-      paymentMethod: "paypal",
+      paymentMethod: "COD",
       paymentStatus: "pending",
       totalAmount: totalCartAmount,
       orderDate: new Date(),
@@ -81,18 +76,20 @@ function ShoppingCheckout() {
       payerId: "",
     };
 
-    dispatch(createNewOrder(orderData)).then((data) => {
-      console.log(data, "sangam");
-      if (data?.payload?.success) {
-        setIsPaymemntStart(true);
-      } else {
-        setIsPaymemntStart(false);
-      }
-    });
-  }
+    setIsPlacingOrder(true);
+    const res = await dispatch(createNewOrder(orderData));
 
-  if (approvalURL) {
-    window.location.href = approvalURL;
+    if (res?.payload?.success) {
+      toast({ title: "Order placed successfully!" });
+      navigate("/shop/payment-success");
+    } else {
+      toast({
+        title: "Failed to place order. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    setIsPlacingOrder(false);
   }
 
   return (
@@ -100,28 +97,30 @@ function ShoppingCheckout() {
       <div className="relative h-[300px] w-full overflow-hidden">
         <img src={img} className="h-full w-full object-cover object-center" />
       </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-5 p-5">
         <Address
           selectedId={currentSelectedAddress}
           setCurrentSelectedAddress={setCurrentSelectedAddress}
         />
+
         <div className="flex flex-col gap-4">
           {cartItems && cartItems.items && cartItems.items.length > 0
             ? cartItems.items.map((item) => (
-                <UserCartItemsContent cartItem={item} />
+                <UserCartItemsContent key={item._id} cartItem={item} />
               ))
             : null}
+
           <div className="mt-8 space-y-4">
             <div className="flex justify-between">
               <span className="font-bold">Total</span>
               <span className="font-bold">${totalCartAmount}</span>
             </div>
           </div>
+
           <div className="mt-4 w-full">
-            <Button onClick={handleInitiatePaypalPayment} className="w-full">
-              {isPaymentStart
-                ? "Processing Paypal Payment..."
-                : "Checkout with Paypal"}
+            <Button onClick={handleCashOnDeliveryOrder} className="w-full">
+              {isPlacingOrder ? "Placing your order..." : "Place Order (Cash on Delivery)"}
             </Button>
           </div>
         </div>

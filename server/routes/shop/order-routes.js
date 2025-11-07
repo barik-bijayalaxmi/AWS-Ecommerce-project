@@ -4,14 +4,17 @@ const {
   createOrder,
   getAllOrdersByUser,
   getOrderDetails,
-  capturePayment,
-} = require("../../controllers/shop/order-controller");
+} = require("../../controllers/shop/order-controller"); // Removed capturePayment
 
 const router = express.Router();
 
+// COD order creation
 router.post("/create", createOrder);
-router.post("/capture", capturePayment);
+
+// Get all orders for a user
 router.get("/list/:userId", getAllOrdersByUser);
+
+// Get order details by ID
 router.get("/details/:id", getOrderDetails);
 
 module.exports = router;
