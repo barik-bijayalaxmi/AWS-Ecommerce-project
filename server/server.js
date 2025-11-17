@@ -1,8 +1,10 @@
-require('dotenv').config(); 
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
+
+// Routers
 const authRouter = require("./routes/auth/auth-routes");
 const adminProductsRouter = require("./routes/admin/products-routes");
 const adminOrderRouter = require("./routes/admin/order-routes");
@@ -16,35 +18,35 @@ const shopReviewRouter = require("./routes/shop/review-routes");
 
 const commonFeatureRouter = require("./routes/common/feature-routes");
 
-// ✅ Add this line just before connecting to check your .env value
-console.log("MongoDB URL:", process.env.MONGODB_URL);
-
-// ✅ Correct MongoDB connection
-mongoose
-  .connect(process.env.MONGODB_URL)
-  .then(() => console.log("MongoDB connected"))
-  .catch((error) => console.log(error));
-
 const app = express();
-const PORT = process.env.PORT || 5000;
 
+// -------------------
+// 🔹 CORS FIX (for EC2)
+// -------------------
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "*", // allow all for testing — replace with domain later
     methods: ["GET", "POST", "DELETE", "PUT"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "Cache-Control",
-      "Expires",
-      "Pragma",
-    ],
     credentials: true,
   })
 );
 
 app.use(cookieParser());
 app.use(express.json());
+
+// -------------------
+// 🔹 MongoDB Connection
+// -------------------
+console.log("MongoDB URL:", process.env.MONGODB_URL);
+
+mongoose
+  .connect(process.env.MONGODB_URL)
+  .then(() => console.log("MongoDB connected"))
+  .catch((error) => console.log("MongoDB Error:", error));
+
+// -------------------
+// 🔹 Routes
+// -------------------
 app.use("/api/auth", authRouter);
 app.use("/api/admin/products", adminProductsRouter);
 app.use("/api/admin/orders", adminOrderRouter);
@@ -58,4 +60,19 @@ app.use("/api/shop/review", shopReviewRouter);
 
 app.use("/api/common/feature", commonFeatureRouter);
 
-app.listen(PORT, () => console.log(`Server is now running on port ${PORT}`));
+// -------------------
+// 🔹 Test Route (Fix for Cannot GET /)
+// -------------------
+app.get("/", (req, res) => {
+  res.send("Backend is running on EC2! 🎉");
+});
+
+// -------------------
+// 🔹 Start Server (IMPORTANT FOR EC2)
+// -------------------
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server is now running on port ${PORT}`);
+});
+
