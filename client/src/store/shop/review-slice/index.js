@@ -10,7 +10,7 @@ export const addReview = createAsyncThunk(
   "/order/addReview",
   async (formdata) => {
     const response = await axios.post(
-      `http://34.229.156.255:5000/api/shop/review/add`,
+      `https://api.theawsn.shop/api/shop/review/add`,
       formdata
     );
 
@@ -20,7 +20,7 @@ export const addReview = createAsyncThunk(
 
 export const getReviews = createAsyncThunk("/order/getReviews", async (id) => {
   const response = await axios.get(
-    `http://34.229.156.255:5000/api/shop/review/${id}`
+    `https://api.theawsn.shop/api/shop/review/${id}`
   );
 
   return response.data;

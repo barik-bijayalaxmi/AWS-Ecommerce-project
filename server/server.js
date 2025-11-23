@@ -25,7 +25,7 @@ const app = express();
 // -------------------
 app.use(
   cors({
-    origin: "*", // allow all for testing — replace with domain later
+    origin: "https://shop.theawsn.shop", // allow all for testing — replace with domain later
     methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
   })
